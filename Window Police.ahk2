@@ -1,0 +1,43 @@
+/************************************************************************
+ * @description Prevent windows from stealing focus from the active window 
+ * @file Window Police
+ * @author Taylor Ginis
+ * @date 2024/02/14
+ * @version 0.1
+ * @versioncodename Beta 1
+ ***********************************************************************/
+#Requires AutoHotkey v2.0+
+#SingleInstance Force
+Persistent()
+InstallKeybdHook
+
+myloop:
+currentWindow:=WinActive('A')
+bypass:
+clicked := 2
+if WinExist(currentWindow){
+    if !WinActive(currentWindow){
+        MouseGetPos(,,&WindowUnderMouse)
+        if WindowUnderMouse = currentWindow{
+            WinActivate(currentWindow)
+            goto bypass
+        }
+        if WindowUnderMouse != currentWindow{
+            if WindowUnderMouse = WinActive('A')
+                goto bypass
+            clicked:= KeyWait("Lbutton", "T2")
+            if clicked = 1 { ;user clicked mouse within 2 seconds
+                MouseGetPos(,,&newWindowUnderMouse)
+                WinActivate(newWindowUnderMouse)
+                currentWindow :=newWindowUnderMouse
+                clicked := 2
+                goto bypass
+            }
+            else if clicked = 0{
+                goto bypass
+            } 
+        }
+    }
+    goto myloop
+} 
+goto myloop
