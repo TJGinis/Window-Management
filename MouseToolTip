@@ -1,0 +1,38 @@
+#Requires AutoHotkey v2.0
+MouseToolTip(Text?, TimeOut:=5, EnableToggle:=false, WhichToolTip?){
+ Static Toggle := false
+    if IsSet(Text) || !(Toggle:=!Toggle){
+        SetTimer(Updating,0),
+        ToolTip(,,, WhichToolTip?)
+        if EnableToggle || !IsSet(text)
+            return
+    }
+    ttw:=ToolTip(Text?,,, WhichToolTip?),
+    anchorPt:= Buffer(8), winRect := Buffer(16),
+    excludeRect:= Buffer(16), outRect:=Buffer(16),
+    WinSize:=winRect.ptr+8,
+    flags:= (VerCompare(A_OSVersion, "6.2")< 0 ? 0: 0x10000),
+    tick := A_TickCount,
+    SetTimer(Updating, -1)
+
+    Updating(){
+        if (A_TickCount-tick > TimeOut*1000) || (EnableToggle && !Toggle){
+            ToolTip(,,,WhichToolTip?),
+            Toggle := 0
+            return
+        }
+        SetWinDelay(-1),
+        CoordMode("Mouse", "Screen"),
+        MouseGetPos(&x,&y),
+        NumPut("int" , x+16 , "int" , y+16, anchorPt),
+        NumPut("int", x-3, "int", y-3, "int", x+3,"int", y+3, excludeRect),
+        DllCall("GetClientRect", "ptr", ttw, "ptr", winRect),
+        DllCall("CalculatePopupWindowPosition", "ptr", anchorPt, "ptr", winSize, "uint", flags, "ptr", excludeRect, "ptr", outRect)
+
+        Try WinMove(numGet(outRect,0,'int'), NumGet(outRect, 4, 'int'),,,ttw)
+        catch
+            return
+        else
+            SetTimer(, -1)
+    }
+}
